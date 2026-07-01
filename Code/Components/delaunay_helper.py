@@ -181,7 +181,7 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
         # ===================== #
         #      DIAGNOSTICS      #
-        # ===================== #
+        #                       #
         print("\n[DIAG] ===== TRIANGULATION INPUT =====")
         print(f"[DIAG] Points layer: {points_path}")
         print(f"[DIAG] Point count: {pts_layer.featureCount()}")
@@ -191,7 +191,7 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
             print(f"[DIAG] Breakline feature count: {brk_layer.featureCount()}")
         else:
             print("[DIAG] No breaklines provided")
-        # ===================== #
+        #                       #
         #      DIAGNOSTICS      #
         # ===================== #
 
@@ -204,10 +204,10 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     print(f"[DIAG] Spatial index built")
     print(f"[DIAG] XYZ dict size: {len(xyz)}")
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
@@ -221,10 +221,10 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     if brk_pts:
         print(f"[DIAG] Break vertices count: {brk_pts.featureCount()}")
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
@@ -235,9 +235,9 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
     tri.setCrs(pts_layer.sourceCrs())
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     print("\n[DIAG] ===== START TRIANGULATION =====")
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
@@ -254,14 +254,51 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
     
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     print("[DIAG] Vertices added to triangulation")
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
 
     if brkz_layer:
+
+        # ===================== #
+        #      DIAGNOSTICS      #
+        #                       #
+        print("\n[DIAG] ===== VALIDATING BREAKLINES =====")
+
+        invalid_count = 0
+        empty_count = 0
+        bad_z_count = 0
+
+        for f in brkz_layer.getFeatures():
+            geom = f.geometry()
+
+            if geom is None or geom.isEmpty():
+                empty_count += 1
+                continue
+
+            if not geom.isGeosValid():
+                invalid_count += 1
+
+            # check Z values
+            for v in geom.vertices():
+                z = v.z()
+                if z is None or z != z:  # NaN check
+                    bad_z_count += 1
+                    break
+
+        print(f"[DIAG] Invalid geometries: {invalid_count}")
+        print(f"[DIAG] Empty geometries: {empty_count}")
+        print(f"[DIAG] Bad Z values: {bad_z_count}")
+
+        print("[DIAG] Adding break vertices...")
+        #                       #
+        #      DIAGNOSTICS      #
+        # ===================== #
+
+
         tri.addVertices(
             brk_pts.getFeatures(),
             -1,
@@ -272,9 +309,9 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
         # ===================== #
         #      DIAGNOSTICS      #
-        # ===================== #
-        print("[DIAG] Vertices added to triangulation")
-        # ===================== #
+        #                       #
+        print("[DIAG] Adding breaklines...")
+        #                       #
         #      DIAGNOSTICS      #
         # ===================== #
 
@@ -287,11 +324,21 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
             brkz_layer.featureCount()
         )
 
+
+        # ===================== #
+        #      DIAGNOSTICS      #
+        #                       #
+        print("[DIAG] Breaklines added successfully")
+        #                       #
+        #      DIAGNOSTICS      #
+        # ===================== #
+
+
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     print("[DIAG] Running triangulatedMesh()...")
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
@@ -300,19 +347,19 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     print("[DIAG] Triangulation complete")
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     face_count = mesh.faceCount()
     print(f"[DIAG] Face count: {face_count}")
     print(f"[DIAG] Estimated memory pressure: ~{face_count * 0.0005:.2f} MB (rough lower bound)")
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
@@ -335,10 +382,10 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     print("\n[DIAG] ===== BUILDING TRIANGLE FEATURES =====")
     print(f"[DIAG] Total faces to process: {total}")
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
@@ -348,13 +395,12 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
         # ===================== #
         #      DIAGNOSTICS      #
-        # ===================== #
+        #                       #
         if i % 10000 == 0:
             print(f"[DIAG] Processing face {i}/{total}")
-        # ===================== #
+        #                       #
         #      DIAGNOSTICS      #
         # ===================== #
-
 
 
         vids = mesh.face(i)
@@ -373,9 +419,9 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     print("[DIAG] Finished building memory layer")
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
@@ -404,9 +450,9 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     print("[DIAG] Writing output to disk...")
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
@@ -418,9 +464,9 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     print("[DIAG] Write complete")
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
@@ -430,13 +476,13 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
     # ===================== #
     #      DIAGNOSTICS      #
-    # ===================== #
+    #                       #
     print("[DIAG] Cleaning up large objects")
     del mesh
     del tri
     del idx
     del xyz
-    # ===================== #
+    #                       #
     #      DIAGNOSTICS      #
     # ===================== #
 
