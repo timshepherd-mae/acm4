@@ -310,6 +310,36 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
         # ===================== #
         #      DIAGNOSTICS      #
         #                       #
+        print("\n[DIAG] ===== CHECKING BREAKLINE INTERSECTIONS =====")
+
+        from qgis.core import QgsSpatialIndex
+
+        features = list(brkz_layer.getFeatures())
+        index = QgsSpatialIndex(features)
+
+        intersection_count = 0
+
+        for f in features:
+            geom = f.geometry()
+            if geom is None:
+                continue
+
+            # get nearby candidates
+            candidate_ids = index.intersects(geom.boundingBox())
+
+            for cid in candidate_ids:
+                if cid == f.id():
+                    continue
+
+                other = brkz_layer.getFeature(cid)
+                other_geom = other.geometry()
+
+                if other_geom and geom.crosses(other_geom):
+                    intersection_count += 1
+                    if intersection_count < 5:
+                        print(f"[DIAG] Intersection found between {f.id()} and {cid}")
+
+        print(f"[DIAG] Total crossing intersections: {intersection_count}")
         print("[DIAG] Adding breaklines...")
         #                       #
         #      DIAGNOSTICS      #
