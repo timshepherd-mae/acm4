@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{9d7f7615-5433-4d6a-ac54-f9733e71534c}</ProjectGuid>
+    <ProjectHome>..\..\..\AppData\Roaming\QGIS\QGIS4\profiles\default\python\acm4\</ProjectHome>
+    <StartupFile>acm4_dev.py</StartupFile>
+    <SearchPath />
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <InterpreterId />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="SolutionDump_20260701_091944.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="acm4_dev.py" />
+    <Compile Include="basic_grid.py" />
+    <Compile Include="boundaries.py" />
+    <Compile Include="corridors.py" />
+    <Compile Include="corridors2.py" />
+    <Compile Include="delaunay.py" />
+    <Compile Include="delaunay_helper.py" />
+    <Compile Include="feat_merge.py" />
+    <Compile Include="feat_merge2.py" />
+    <Compile Include="feat_merge3.py" />
+    <Compile Include="form_triang.py" />
+    <Compile Include="form_triang2.py" />
+    <Compile Include="form_triang3.py" />
+    <Compile Include="geom_helpers.py" />
+    <Compile Include="grid_overrides.py" />
+    <Compile Include="grid_overrides2.py" />
+    <Compile Include="ndsm_mask.py" />
+    <Compile Include="out_helpers.py" />
+    <Compile Include="raster_prep.py" />
+    <Compile Include="slope_grid.py" />
+    <Compile Include="slope_mask.py" />
+    <Compile Include="__init__.py" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+</Project>
