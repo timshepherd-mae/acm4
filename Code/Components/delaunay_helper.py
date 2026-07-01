@@ -314,8 +314,10 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
 
         from qgis.core import QgsSpatialIndex
 
+        # features = list(brkz_layer.getFeatures())
+        # index = QgsSpatialIndex(features)
+        index = QgsSpatialIndex(brkz_layer.getFeatures())
         features = list(brkz_layer.getFeatures())
-        index = QgsSpatialIndex(features)
 
         intersection_count = 0
 
@@ -346,13 +348,13 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
         # ===================== #
 
 
-        tri.addBreakLines(
-            brkz_layer.getFeatures(),
-            -1,
-            QgsCoordinateTransform(brkz_layer.sourceCrs(), pts_layer.sourceCrs(), QgsProject.instance()),
-            None,
-            brkz_layer.featureCount()
-        )
+        # tri.addBreakLines(
+        #     brkz_layer.getFeatures(),
+        #     -1,
+        #     QgsCoordinateTransform(brkz_layer.sourceCrs(), pts_layer.sourceCrs(), QgsProject.instance()),
+        #     None,
+        #     brkz_layer.featureCount()
+        # )
 
 
         # ===================== #
