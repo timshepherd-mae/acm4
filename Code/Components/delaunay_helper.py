@@ -4,6 +4,7 @@
 
 import os
 from pathlib import Path
+import processing
 
 from qgis.core import (
     QgsProject, QgsVectorLayer, QgsWkbTypes, QgsFeatureRequest, QgsGeometry,
@@ -215,6 +216,44 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
     brkz_layer = None
     if brk_layer:
         brkz_layer = _breaklines_with_z(brk_layer, pts_layer, idx, xyz)  # one feature per part
+
+        print("[DIAG] Cleaning breaklines for triangulation safety...")
+
+        # STEP 1 — snap (fix precision / near-misses)
+        snapped = processing.run("native:snapgeometries", {
+            "INPUT": brkz_layer,
+            "REFERENCE_LAYER": brkz_layer,
+            "TOLERANCE": 0.001,  # adjust if needed
+            "BEHAVIOR": 0,
+            "OUTPUT": "memory:"
+        })["OUTPUT"]
+
+        # STEP 2 — node the network (CRITICAL)
+        noded = processing.run("native:splitwithlines", {
+            "INPUT": snapped,
+            "LINES": snapped,
+            "OUTPUT": "memory:"
+        })["OUTPUT"]
+
+        # STEP 3 — remove duplicates
+        deduped = processing.run("native:deleteduplicategeometries", {
+            "INPUT": noded,
+            "OUTPUT": "memory:"
+        })["OUTPUT"]
+
+        # STEP 4 — explode to single segments (optional but safer)
+        clean_breaks = processing.run("native:explodelines", {
+            "INPUT": deduped,
+            "OUTPUT": "memory:"
+        })["OUTPUT"]
+
+        print("[DIAG] Breakline cleaning complete")
+
+        # ✅ USE CLEANED LAYER FROM HERE ON
+        brkz_layer = clean_breaks
+
+        # rebuild vertices from cleaned geometry
+
         brk_pts   = _break_vertices_layer(brkz_layer)
     else:
         brk_pts = None
@@ -348,13 +387,13 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
         # ===================== #
 
 
-        # tri.addBreakLines(
-        #     brkz_layer.getFeatures(),
-        #     -1,
-        #     QgsCoordinateTransform(brkz_layer.sourceCrs(), pts_layer.sourceCrs(), QgsProject.instance()),
-        #     None,
-        #     brkz_layer.featureCount()
-        # )
+        tri.addBreakLines(
+            brkz_layer.getFeatures(),
+            -1,
+            QgsCoordinateTransform(brkz_layer.sourceCrs(), pts_layer.sourceCrs(), QgsProject.instance()),
+            None,
+            brkz_layer.featureCount()
+        )
 
 
         # ===================== #
