@@ -178,11 +178,38 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
     brk_layer = None
     if breaks_path:
         brk_layer = _load_vector_first_layer(breaks_path, "breaklines")
+
+        # ===================== #
+        #      DIAGNOSTICS      #
+        # ===================== #
+        print("\n[DIAG] ===== TRIANGULATION INPUT =====")
+        print(f"[DIAG] Points layer: {points_path}")
+        print(f"[DIAG] Point count: {pts_layer.featureCount()}")
+
+        if brk_layer:
+            print(f"[DIAG] Breaklines layer: {breaks_path}")
+            print(f"[DIAG] Breakline feature count: {brk_layer.featureCount()}")
+        else:
+            print("[DIAG] No breaklines provided")
+        # ===================== #
+        #      DIAGNOSTICS      #
+        # ===================== #
+
         if brk_layer.geometryType() != QgsWkbTypes.LineGeometry:
             raise RuntimeError(f"breaklines must be a line layer; got {QgsWkbTypes.displayString(brk_layer.wkbType())}")
 
     # ---------------- Prep: point index (for IDW) ----------------
+
     idx, xyz = _build_point_index(pts_layer)
+
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    print(f"[DIAG] Spatial index built")
+    print(f"[DIAG] XYZ dict size: {len(xyz)}")
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
 
     # ---------------- Build constraints ----------------
     brkz_layer = None
@@ -192,9 +219,30 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
     else:
         brk_pts = None
 
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    if brk_pts:
+        print(f"[DIAG] Break vertices count: {brk_pts.featureCount()}")
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+
+
     # ---------------- Triangulate ----------------
+
     tri = QgsMeshTriangulation()
     tri.setCrs(pts_layer.sourceCrs())
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    print("\n[DIAG] ===== START TRIANGULATION =====")
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+
+
+
 
     tri.addVertices(
         pts_layer.getFeatures(),
@@ -203,6 +251,15 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
         None,
         pts_layer.featureCount()
     )
+    
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    print("[DIAG] Vertices added to triangulation")
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+
 
     if brkz_layer:
         tri.addVertices(
@@ -212,6 +269,16 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
             None,
             brk_pts.featureCount()
         )
+
+        # ===================== #
+        #      DIAGNOSTICS      #
+        # ===================== #
+        print("[DIAG] Vertices added to triangulation")
+        # ===================== #
+        #      DIAGNOSTICS      #
+        # ===================== #
+
+
         tri.addBreakLines(
             brkz_layer.getFeatures(),
             -1,
@@ -220,7 +287,36 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
             brkz_layer.featureCount()
         )
 
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    print("[DIAG] Running triangulatedMesh()...")
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+
+
     mesh = tri.triangulatedMesh()
+
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    print("[DIAG] Triangulation complete")
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    face_count = mesh.faceCount()
+    print(f"[DIAG] Face count: {face_count}")
+    print(f"[DIAG] Estimated memory pressure: ~{face_count * 0.0005:.2f} MB (rough lower bound)")
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+
+
     if not mesh or mesh.faceCount() == 0:
         #raise RuntimeError("Triangulation produced no faces — check inputs/constraints.")
         dummy = 0
@@ -236,7 +332,31 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
     mem.updateFields()
 
     total = mesh.faceCount()
+
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    print("\n[DIAG] ===== BUILDING TRIANGLE FEATURES =====")
+    print(f"[DIAG] Total faces to process: {total}")
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+
+
+
     for i in range(total):
+
+        # ===================== #
+        #      DIAGNOSTICS      #
+        # ===================== #
+        if i % 10000 == 0:
+            print(f"[DIAG] Processing face {i}/{total}")
+        # ===================== #
+        #      DIAGNOSTICS      #
+        # ===================== #
+
+
+
         vids = mesh.face(i)
         ring = []
         for vid in vids:
@@ -250,6 +370,15 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
         f.setAttribute("face_id", i)
         f.setGeometry(QgsGeometry.fromWkt(wkt))
         dp.addFeature(f)
+
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    print("[DIAG] Finished building memory layer")
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+
 
     mem.updateExtents()
 
@@ -272,12 +401,44 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
         # SHP/others: overwrite the whole file
         options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
 
+
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    print("[DIAG] Writing output to disk...")
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+
+
     res, err, new_path, new_layer = QgsVectorFileWriter.writeAsVectorFormatV3(
         mem, out_path, QgsProject.instance().transformContext(), options
     )
 
+
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    print("[DIAG] Write complete")
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+
+
     if res != QgsVectorFileWriter.NoError:
         raise RuntimeError(f"Failed to write output: {err}")
+
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
+    print("[DIAG] Cleaning up large objects")
+    del mesh
+    del tri
+    del idx
+    del xyz
+    # ===================== #
+    #      DIAGNOSTICS      #
+    # ===================== #
 
  
     return out_path
