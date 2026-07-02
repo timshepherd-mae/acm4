@@ -14,6 +14,8 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QVariant
 from qgis.analysis import QgsMeshTriangulation
 
+
+
 # ----------------------------
 # Internal helpers
 # ----------------------------
@@ -422,13 +424,31 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
         #      DIAGNOSTICS      #
         # ===================== #
 
-        tri.addBreakLines(
-            brkz_layer.getFeatures(),
-            -1,
-            QgsCoordinateTransform(brkz_layer.sourceCrs(), pts_layer.sourceCrs(), QgsProject.instance()),
-            None,
-            brkz_layer.featureCount()
-        )
+        # ===================== #
+        #      DIAGNOSTICS      #
+        #                       #
+        
+
+        multi_count = 0
+
+        for f in brkz_layer.getFeatures():
+            if QgsWkbTypes.isMultiType(f.geometry().wkbType()):
+                multi_count += 1
+
+        print(f"[DIAG] MultiLineString features: {multi_count}")
+        #                       #
+        #      DIAGNOSTICS      #
+        # ===================== #
+
+
+
+        # tri.addBreakLines(
+        #     brkz_layer.getFeatures(),
+        #     -1,
+        #     QgsCoordinateTransform(brkz_layer.sourceCrs(), pts_layer.sourceCrs(), QgsProject.instance()),
+        #     None,
+        #     brkz_layer.featureCount()
+        # )
 
 
 
