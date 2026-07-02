@@ -386,6 +386,41 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
         #      DIAGNOSTICS      #
         # ===================== #
 
+        # ===================== #
+        #      DIAGNOSTICS      #
+        #                       #
+        print("\n[DIAG] ===== CHECKING BREAKLINE VERTEX QUALITY =====")
+
+        bad_segments = 0
+        duplicate_vertices = 0
+
+        for f in brkz_layer.getFeatures():
+            geom = f.geometry()
+            if not geom:
+                continue
+
+            prev = None
+            for v in geom.vertices():
+                pt = (round(v.x(), 8), round(v.y(), 8))
+
+                if prev:
+                    # duplicate vertex
+                    if pt == prev:
+                        duplicate_vertices += 1
+
+                    # zero-length segment
+                    dx = abs(pt[0] - prev[0])
+                    dy = abs(pt[1] - prev[1])
+                    if dx < 1e-9 and dy < 1e-9:
+                        bad_segments += 1
+
+                prev = pt
+
+        print(f"[DIAG] Duplicate vertices: {duplicate_vertices}")
+        print(f"[DIAG] Zero-length segments: {bad_segments}")
+        #                       #
+        #      DIAGNOSTICS      #
+        # ===================== #
 
         tri.addBreakLines(
             brkz_layer.getFeatures(),
@@ -394,6 +429,8 @@ def build_triangulation(points_path: str, breaks_path: str, out_path: str):
             None,
             brkz_layer.featureCount()
         )
+
+
 
 
         # ===================== #
